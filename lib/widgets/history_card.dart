@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:steps_counter/cubits/step_counter_cubit.dart';
-import 'package:steps_counter/utils/utils.dart';
+import 'package:stepie/cubits/step_counter_cubit.dart';
+import 'package:stepie/utils/utils.dart';
 
 class HistoryCard extends StatefulWidget {
   const HistoryCard({

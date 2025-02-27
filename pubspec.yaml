@@ -1,5 +1,5 @@
-name: steps_counter
-description: "A new Flutter project."
+name: stepie
+description: "A steps tracker app with a unique UI design and a simple user experience."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -31,14 +31,16 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
 
   fonts:
     - family: Jersey
       fonts:
         - asset: assets/fonts/Jersey20-Regular.ttf
+    - family: RacingSansOne
+      fonts:
+        - asset: assets/fonts/RacingSansOne-Regular.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:steps_counter/utils/utils.dart';
-import 'package:steps_counter/widgets/steps_card.dart';
+import 'package:stepie/utils/utils.dart';
+import 'package:stepie/widgets/steps_card.dart';
 
 class CustomCard extends StatelessWidget {
   const CustomCard({

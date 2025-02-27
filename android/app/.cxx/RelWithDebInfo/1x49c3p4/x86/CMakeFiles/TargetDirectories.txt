@@ -1,0 +1,2 @@
+C:/Users/Ihimbru/Desktop/apps/steps_counter/android/app/.cxx/RelWithDebInfo/1x49c3p4/x86/CMakeFiles/edit_cache.dir
+C:/Users/Ihimbru/Desktop/apps/steps_counter/android/app/.cxx/RelWithDebInfo/1x49c3p4/x86/CMakeFiles/rebuild_cache.dir

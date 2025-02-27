@@ -22,6 +22,8 @@ class AppFonts {
       TextStyle(fontFamily: 'Jersey', fontSize: 24, color: Colors.white);
   static TextStyle smallText =
       TextStyle(fontFamily: 'Jersey', fontSize: 20, color: Colors.white);
+  static TextStyle splashScreenText =
+      TextStyle(fontFamily: 'RacingSansOne', fontSize: 80, color: Colors.white);
 }
 
 final ThemeData darkTheme = ThemeData(

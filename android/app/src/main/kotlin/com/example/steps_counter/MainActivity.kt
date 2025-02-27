@@ -1,4 +1,4 @@
-package com.example.steps_counter
+package com.briantechnologies.stepie
 
 import io.flutter.embedding.android.FlutterActivity
 
