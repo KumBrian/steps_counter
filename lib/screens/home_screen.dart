@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:stepie/cubits/step_counter_cubit.dart';
@@ -14,11 +15,30 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
-    BlocProvider.of<StepCounterCubit>(context).countSteps();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    BlocProvider.of<StepCounterCubit>(context).countSteps();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // Start background service when app is minimized
+      FlutterBackgroundService().startService();
+    }
+    if (state == AppLifecycleState.resumed) {
+      // Stop background service when app is resumed
+      FlutterBackgroundService().invoke('stopService');
+    }
   }
 
   List<String> dates = List.generate(7, (index) {

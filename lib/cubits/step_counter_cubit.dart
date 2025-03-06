@@ -1,7 +1,8 @@
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:pedometer/pedometer.dart';
-import 'package:hive/hive.dart';
 
 class StepCounterCubit extends Cubit<Map<String, dynamic>> {
   final Box<Map<dynamic, dynamic>> stepHistoryBox;
@@ -14,16 +15,25 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
                   .get('history', defaultValue: <String, int>{}) as Map)
               .cast<String, int>()
         }) {
+    // Listen for background service updates
+    FlutterBackgroundService().on('updateSteps').listen((event) {
+      if (event != null) {
+        final steps = event['steps'] as int;
+        final history = event['history'] as Map<String, int>;
+        emit({'currentSteps': steps, 'history': history});
+      }
+    });
+
+    // Start step counting
     countSteps();
   }
 
-  void countSteps() {
+  void countSteps() async {
     late Stream<StepCount> stepCountStream;
     stepCountStream = Pedometer.stepCountStream;
     int? previousSteps;
     stepCountStream.listen((event) {
       if (previousSteps == null) {
-        // Initialize previousSteps with the first event's steps
         previousSteps = event.steps;
         emit({'currentSteps': 0, 'history': state['history']});
       } else {
@@ -34,6 +44,7 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
         addStepToHistory(newSteps);
       }
     }, onError: (e) {
+      // ignore: avoid_print
       print('Step Count Error: $e');
     });
   }
@@ -57,14 +68,5 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
 
     stepHistoryBox.put('history', currentHistory.cast<dynamic, dynamic>());
     emit({'currentSteps': state['currentSteps'], 'history': currentHistory});
-  }
-
-  void reset() {
-    emit({'currentSteps': 0, 'history': state['history']});
-  }
-
-  void saveStep() {
-    int finalSteps = state['currentSteps'];
-    emit({'currentSteps': finalSteps, 'history': state['history']});
   }
 }
