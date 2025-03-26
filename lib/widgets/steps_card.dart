@@ -42,7 +42,7 @@ class _StepsCardState extends State<StepsCard> {
                       BlocProvider.of<StepCounterCubit>(context);
                   return Text(
                     '${stepCounterCubit.state['currentSteps']}',
-                    style: AppFonts.appBarheading
+                    style: AppFonts.appBarHeading
                         .copyWith(color: AppColors.purpleColor),
                   );
                 },

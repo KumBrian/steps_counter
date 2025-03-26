@@ -1,11 +1,15 @@
-import 'package:flutter_background_service/flutter_background_service.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:health/health.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:pedometer/pedometer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StepCounterCubit extends Cubit<Map<String, dynamic>> {
   final Box<Map<dynamic, dynamic>> stepHistoryBox;
+  Timer? _timer;
 
   StepCounterCubit()
       : stepHistoryBox = Hive.box<Map<dynamic, dynamic>>('stepHistoryBox'),
@@ -15,50 +19,106 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
                   .get('history', defaultValue: <String, int>{}) as Map)
               .cast<String, int>()
         }) {
-    // Listen for background service updates
-    FlutterBackgroundService().on('updateSteps').listen((event) {
-      if (event != null) {
-        final steps = event['steps'] as int;
-        final history = event['history'] as Map<String, int>;
-        emit({'currentSteps': steps, 'history': history});
-      }
-    });
-
-    // Start step counting
-    countSteps();
+    fetchStepData();
+    startStepUpdates();
   }
 
-  void countSteps() async {
-    late Stream<StepCount> stepCountStream;
-    stepCountStream = Pedometer.stepCountStream;
-    int? previousSteps;
-    stepCountStream.listen((event) {
-      if (previousSteps == null) {
-        previousSteps = event.steps;
-        emit({'currentSteps': 0, 'history': state['history']});
-      } else {
-        int newSteps = event.steps - previousSteps!;
-        previousSteps = event.steps;
-        int updatedSteps = state['currentSteps'] + newSteps;
-        emit({'currentSteps': updatedSteps, 'history': state['history']});
-        addStepToHistory(newSteps);
+  Future<void> fetchStepData() async {
+    // Check SDK availability
+    final availabilityStatus = await Health().getHealthConnectSdkStatus();
+
+    if (availabilityStatus == HealthConnectSdkStatus.sdkUnavailable) {
+      return; // No integration possible
+    }
+
+    if (availabilityStatus ==
+        HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired) {
+      // Redirect to Google Play Store for update
+      final String providerPackageName = "com.google.android.apps.healthdata";
+      final String uriString =
+          "market://details?id=$providerPackageName&url=healthconnect%3A%2F%2Fonboarding";
+
+      final Uri uri = Uri.parse(uriString);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
-    }, onError: (e) {
-      // ignore: avoid_print
-      print('Step Count Error: $e');
+      return;
+    }
+
+    HealthDataType type = HealthDataType.STEPS;
+    requestPermissions(type);
+  }
+
+  void countSteps(HealthDataType type) async {
+    final Health health = Health();
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day, 0, 0, 0);
+
+    if (kDebugMode) {
+      print("Fetching step data from $todayMidnight to $now");
+    }
+
+    List<HealthDataPoint> stepData = await health.getHealthDataFromTypes(
+        startTime: todayMidnight, endTime: now, types: [type]);
+
+    // Ensure numericValue is not null before summing
+    int totalSteps = stepData.fold(0, (sum, dataPoint) {
+      final value = dataPoint.value;
+      if (value is NumericHealthValue) {
+        return sum + (value.numericValue.toInt());
+      }
+      return sum;
+    });
+
+    print('🔥 Total Steps Today: $totalSteps');
+
+    // Update the UI with the step count
+    updateStepCount(totalSteps);
+  }
+
+  void requestPermissions(HealthDataType type) async {
+    final Health health = Health();
+    final now = DateTime.now().toLocal();
+    final yesterday = DateTime(now.year, now.month, now.day);
+    health.configure();
+    await health
+        .requestAuthorization([type], permissions: [HealthDataAccess.READ]);
+    final permissions = await health
+        .hasPermissions([type], permissions: [HealthDataAccess.READ]);
+
+    if (permissions!) {
+      try {
+        countSteps(type);
+        return;
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error retrieving steps: $e");
+        }
+      }
+    } else {
+      requestPermissions(type);
+    }
+  }
+
+  void startStepUpdates() {
+    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      countSteps(HealthDataType.STEPS);
+      // Fetch steps every 10 seconds
     });
   }
 
-  void addStepToHistory(int steps) {
+  @override
+  Future<void> close() {
+    _timer?.cancel(); // Cancel timer when cubit is closed
+    return super.close();
+  }
+
+  void updateStepCount(int steps) {
     final Map<String, int> currentHistory =
         Map<String, int>.from(state['history']);
-    final String date = DateFormat.EEEE().format(DateTime.now());
+    final String date = DateFormat.EEEE().format(DateTime.now().toLocal());
 
-    if (currentHistory.containsKey(date)) {
-      currentHistory[date] = currentHistory[date]! + steps;
-    } else {
-      currentHistory[date] = steps;
-    }
+    currentHistory[date] = steps;
 
     // Ensure only the last 7 days are kept
     if (currentHistory.length > 7) {
@@ -67,6 +127,6 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
     }
 
     stepHistoryBox.put('history', currentHistory.cast<dynamic, dynamic>());
-    emit({'currentSteps': state['currentSteps'], 'history': currentHistory});
+    emit({'currentSteps': steps, 'history': currentHistory});
   }
 }

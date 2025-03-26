@@ -46,7 +46,7 @@ class _HistoryCardState extends State<HistoryCard> {
                       ? Text('-')
                       : Text(
                           '${stepCounterCubit.state['history'][widget.date]}',
-                          style: AppFonts.appBarheading
+                          style: AppFonts.appBarHeading
                               .copyWith(color: AppColors.purpleColor),
                         );
                 },

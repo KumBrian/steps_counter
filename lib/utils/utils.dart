@@ -13,7 +13,7 @@ class AppColors {
 }
 
 class AppFonts {
-  static TextStyle appBarheading =
+  static TextStyle appBarHeading =
       TextStyle(fontFamily: 'Jersey', fontSize: 32, color: Colors.white);
   static TextStyle heading =
       TextStyle(fontFamily: 'Jersey', fontSize: 40, color: Colors.white);
@@ -44,7 +44,7 @@ final ThemeData darkTheme = ThemeData(
   cardColor: AppColors.primaryColor,
   dividerColor: Colors.black12,
   textTheme: TextTheme(
-    headlineMedium: AppFonts.appBarheading,
+    headlineMedium: AppFonts.appBarHeading,
     headlineLarge: AppFonts.heading,
     bodyMedium: AppFonts.normalText,
     bodySmall: AppFonts.smallText,

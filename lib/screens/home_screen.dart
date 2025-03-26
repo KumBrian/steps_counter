@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    BlocProvider.of<StepCounterCubit>(context).countSteps();
+    BlocProvider.of<StepCounterCubit>(context).fetchStepData();
   }
 
   @override
@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         backgroundColor: AppColors.backgroundColor,
         appBar: AppBar(
           title:
-              Text('S T E P S  C O U N T E R', style: AppFonts.appBarheading),
+              Text('S T E P S  C O U N T E R', style: AppFonts.appBarHeading),
           centerTitle: true,
         ),
         body: Column(
