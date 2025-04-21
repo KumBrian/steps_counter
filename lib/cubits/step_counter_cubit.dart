@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:health/health.dart';
@@ -21,6 +22,13 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
         }) {
     fetchStepData();
     startStepUpdates();
+    _initialize();
+  }
+
+  void _initialize() {
+    fetchStepData();
+    startStepUpdates();
+    // Start notifications automatically
   }
 
   Future<void> fetchStepData() async {
@@ -52,7 +60,7 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
   void countSteps(HealthDataType type) async {
     final Health health = Health();
     final now = DateTime.now();
-    final todayMidnight = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final todayMidnight = DateTime(now.year, now.month, now.day);
 
     if (kDebugMode) {
       print("Fetching step data from $todayMidnight to $now");
@@ -70,7 +78,9 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
       return sum;
     });
 
-    print('🔥 Total Steps Today: $totalSteps');
+    if (kDebugMode) {
+      print('🔥 Total Steps Today: $totalSteps');
+    }
 
     // Update the UI with the step count
     updateStepCount(totalSteps);
@@ -78,11 +88,10 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
 
   void requestPermissions(HealthDataType type) async {
     final Health health = Health();
-    final now = DateTime.now().toLocal();
-    final yesterday = DateTime(now.year, now.month, now.day);
     health.configure();
     await health
         .requestAuthorization([type], permissions: [HealthDataAccess.READ]);
+
     final permissions = await health
         .hasPermissions([type], permissions: [HealthDataAccess.READ]);
 
@@ -104,6 +113,12 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
     _timer = Timer.periodic(Duration(seconds: 10), (timer) {
       countSteps(HealthDataType.STEPS);
       // Fetch steps every 10 seconds
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: 10,
+              channelKey: 'stepie',
+              title: 'Stepie',
+              body: 'You have done ${state['currentSteps']} steps today'));
     });
   }
 
@@ -114,6 +129,7 @@ class StepCounterCubit extends Cubit<Map<String, dynamic>> {
   }
 
   void updateStepCount(int steps) {
+    //TODO: send notification
     final Map<String, int> currentHistory =
         Map<String, int>.from(state['history']);
     final String date = DateFormat.EEEE().format(DateTime.now().toLocal());
